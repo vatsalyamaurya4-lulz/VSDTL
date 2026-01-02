@@ -1,0 +1,235 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>VSDTL IDE</title>
+
+<style>
+html, body {
+  margin: 0;
+  height: 100%;
+  background: #0a0a0c;
+  color: #eaeaea;
+  font-family: monospace;
+  overflow: hidden;
+}
+
+.hidden { display: none !important; }
+.screen {
+  height: 100vh;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+}
+
+button {
+  border: none;
+  border-radius: 999px;
+  padding: 10px 18px;
+  font-size: 16px;
+  cursor: pointer;
+}
+
+.play { background: #2ecc71; color: #000; }
+.stop { background: #e74c3c; color: #fff; }
+
+#ui {
+  height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+
+#editorWrap {
+  flex: 1;
+  background: #0f1115;
+  overflow-y: auto;
+}
+
+#editor {
+  min-height: 100%;
+  padding: 16px;
+  outline: none;
+  white-space: pre;
+}
+
+#output {
+  height: 35%;
+  background: #050507;
+  border-top: 1px solid #222;
+  padding: 14px;
+  overflow-y: auto;
+  white-space: pre-wrap;
+}
+
+#prompt {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  background: #030305;
+  border-top: 1px solid #222;
+  padding: 10px;
+}
+
+#cmd {
+  flex: 1;
+  background: #000;
+  color: #0f0;
+  border: none;
+  padding: 8px;
+  border-radius: 12px;
+  outline: none;
+}
+
+/* Syntax colors */
+.blue { color: #4da6ff; }
+.green { color: #7CFC98; }
+.yellow { color: #f1c40f; }
+.purple { color: #b084f7; }
+</style>
+</head>
+
+<body>
+
+<!-- DEVICE SELECT -->
+<div id="deviceSelect" class="screen">
+  <h2>VSDTL IDE</h2>
+  <button class="play" onclick="selectDevice('mobile')">Mobile</button>
+  <button class="play" onclick="selectDevice('pc')">PC</button>
+</div>
+
+<!-- IDE -->
+<div id="ui" class="hidden">
+  <div id="editorWrap">
+    <div id="editor" contenteditable="true" spellcheck="false"></div>
+  </div>
+
+  <div id="output"></div>
+
+  <div id="prompt">
+    <button class="play" onclick="runCommand()">▶</button>
+    <span>&gt;</span>
+    <input id="cmd" placeholder='Insert(table) | Add(table,"x") | Display(#table)'>
+  </div>
+</div>
+
+<script>
+let device = "pc";
+let tables = {};
+let rawSource = "";
+let composing = false;
+
+const editor = document.getElementById("editor");
+const output = document.getElementById("output");
+const cmd = document.getElementById("cmd");
+
+/* DEVICE */
+function selectDevice(d) {
+  device = d;
+  document.getElementById("deviceSelect").classList.add("hidden");
+  document.getElementById("ui").classList.remove("hidden");
+}
+
+/* COMPOSITION SAFETY (iOS FIX) */
+editor.addEventListener("compositionstart", () => composing = true);
+editor.addEventListener("compositionend", () => {
+  composing = false;
+  highlight();
+});
+
+/* SYNTAX HIGHLIGHT */
+editor.addEventListener("input", () => {
+  if (!composing) highlight();
+});
+
+function highlight() {
+  if (composing) return;
+
+  rawSource = editor.innerText;
+
+  let safe = rawSource
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;");
+
+  safe = safe
+    .replace(/(@\w+)/g, '<span class="blue">$1</span>')
+    .replace(/(".*?")/g, '<span class="green">$1</span>')
+    .replace(/\bDisplay\b/g, '<span class="yellow">Display</span>')
+    .replace(/(#\w+)/g, '<span class="purple">$1</span>');
+
+  editor.innerHTML = safe;
+  caretToEnd();
+}
+
+function caretToEnd() {
+  const range = document.createRange();
+  const sel = window.getSelection();
+  range.selectNodeContents(editor);
+  range.collapse(false);
+  sel.removeAllRanges();
+  sel.addRange(range);
+}
+
+/* EXECUTION */
+function execLine(line) {
+  if (!line) return;
+
+  if (line.startsWith("@")) {
+    const [n, v] = line.split("=");
+    tables[n.slice(1).trim()] = JSON.parse(v);
+  } 
+  else if (line.startsWith("Display")) {
+    const t = line.match(/#(\w+)/)?.[1];
+    if (tables[t]) output.textContent += tables[t].join(", ") + "\n";
+    else output.textContent += `Error: ${t} not found\n`;
+  }
+}
+
+/* COMMAND PROMPT */
+function runCommand() {
+  const c = cmd.value.trim();
+  if (!c) return;
+  cmd.value = "";
+
+  const t0 = performance.now();
+
+  if (c.startsWith("Insert(")) {
+    const n = c.slice(7, -1);
+    tables[n] = [];
+    rawSource += `\n@${n} = []`;
+    editor.innerText = rawSource;
+    highlight();
+  }
+
+  else if (c.startsWith("Add(")) {
+    const inside = c.slice(4, -1);
+    const n = inside.split(",")[0];
+    const vals = inside.match(/"[^"]+"/g)?.map(v => v.replace(/"/g, "")) || [];
+    if (!tables[n]) tables[n] = [];
+    tables[n].push(...vals);
+
+    rawSource = rawSource.replace(
+      new RegExp(`@${n} = .*`),
+      `@${n} = ${JSON.stringify(tables[n])}`
+    );
+    editor.innerText = rawSource;
+    highlight();
+  }
+
+  else if (c.startsWith("Display")) {
+    execLine(c);
+  }
+
+  output.textContent += `command executed in ${(performance.now() - t0).toFixed(2)} ms\n`;
+}
+
+/* PC ENTER */
+cmd.addEventListener("keydown", e => {
+  if (device === "pc" && e.key === "Enter") runCommand();
+});
+</script>
+
+</body>
+</html>
