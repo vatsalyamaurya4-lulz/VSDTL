@@ -154,7 +154,7 @@ function highlight() {
     .replace(/>/g, "&gt;");
 
   safe = safe
-    .replace(/(@\w+)/g, '<span class="blue">$1</span>')
+    .replace(/(@\w+)(?=\s|$)/g,'<span class="blue">$1</span>')
     .replace(/(".*?")/g, '<span class="green">$1</span>')
     .replace(/\bDisplay\b/g, '<span class="yellow">Display</span>')
     .replace(/(#\w+)/g, '<span class="purple">$1</span>');
