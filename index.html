@@ -6,12 +6,30 @@
 <title>VSDTL IDE</title>
 
 <style>
+:root {
+  --bg:        #0d1117;
+  --bg-alt:    #161b22;
+  --border:    #30363d;
+  --text:      #c9d1d9;
+  --text-dim:  #8b949e;
+  --blue:      #79c0ff;
+  --green:     #7ee787;
+  --yellow:    #e3b341;
+  --purple:    #d2a8ff;
+  --run-bg:    #238636;
+  --run-bg-h:  #2ea043;
+  --clear-bg:  #21262d;
+  --clear-bd:  #30363d;
+}
+
+* { box-sizing: border-box; }
+
 html, body {
   margin: 0;
   height: 100%;
-  background: #0b0b0d;
-  font-family: monospace;
-  color: #eee;
+  background: var(--bg);
+  font-family: 'SF Mono', 'Cascadia Code', 'Fira Code', Consolas, monospace;
+  color: var(--text);
 }
 
 #app {
@@ -20,10 +38,61 @@ html, body {
   height: 100vh;
 }
 
+/* Header */
+#header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 10px 16px;
+  background: var(--bg-alt);
+  border-bottom: 1px solid var(--border);
+  flex-shrink: 0;
+}
+
+#title {
+  font-size: 15px;
+  font-weight: 700;
+  letter-spacing: 0.5px;
+  color: var(--text);
+}
+
+#title .accent { color: var(--blue); }
+
+#headerActions {
+  display: flex;
+  gap: 8px;
+}
+
+button {
+  font-family: inherit;
+  font-size: 13px;
+  border: none;
+  border-radius: 6px;
+  padding: 7px 16px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.15s;
+}
+
+#runBtn {
+  background: var(--run-bg);
+  color: #fff;
+}
+#runBtn:hover { background: var(--run-bg-h); }
+
+#clearBtn {
+  background: var(--clear-bg);
+  color: var(--text);
+  border: 1px solid var(--clear-bd);
+}
+#clearBtn:hover { background: #30363d; }
+
 /* Editor stack */
 #editorWrap {
   position: relative;
   flex: 1;
+  min-height: 0;
+  overflow: hidden;
 }
 
 #editor {
@@ -31,78 +100,103 @@ html, body {
   inset: 0;
   background: transparent;
   color: transparent;
-  caret-color: #fff;
+  caret-color: var(--text);
   border: none;
   outline: none;
-  padding: 14px;
-  font-size: 16px;
+  padding: 16px;
+  font-family: inherit;
+  font-size: 14px;
   resize: none;
-  line-height: 1.4;
+  line-height: 1.6;
+  white-space: pre-wrap;
+  word-wrap: break-word;
+  z-index: 1;
 }
 
 #highlight {
   position: absolute;
   inset: 0;
   pointer-events: none;
-  padding: 14px;
+  padding: 16px;
+  font-family: inherit;
+  font-size: 14px;
+  line-height: 1.6;
   white-space: pre-wrap;
-  line-height: 1.4;
-  overflow: hidden;
-}
-
-/* Toolbar */
-#toolbar {
-  display: flex;
-  gap: 10px;
-  padding: 10px;
-  background: #060608;
-  border-top: 1px solid #222;
-}
-
-#runBtn {
-  background: #2ecc71;
-  border: none;
-  border-radius: 999px;
-  padding: 8px 18px;
-  font-weight: bold;
-  cursor: pointer;
+  word-wrap: break-word;
+  overflow: auto;
+  z-index: 0;
 }
 
 /* Output */
+#outputBar {
+  display: flex;
+  align-items: center;
+  padding: 6px 16px;
+  background: var(--bg-alt);
+  border-top: 1px solid var(--border);
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  color: var(--text-dim);
+  flex-shrink: 0;
+}
+
 #output {
-  height: 30%;
-  background: #050507;
-  border-top: 1px solid #222;
-  padding: 12px;
+  height: 28%;
+  min-height: 100px;
+  background: var(--bg);
+  padding: 12px 16px;
   overflow-y: auto;
   white-space: pre-wrap;
+  font-size: 13px;
+  flex-shrink: 0;
 }
 
 /* Prompt */
 #prompt {
   display: flex;
-  gap: 10px;
+  gap: 8px;
   align-items: center;
-  padding: 10px;
-  background: #030305;
-  border-top: 1px solid #222;
+  padding: 10px 16px;
+  background: var(--bg-alt);
+  border-top: 1px solid var(--border);
+  flex-shrink: 0;
+}
+
+#prompt .prefix {
+  color: var(--green);
+  font-weight: 700;
+  flex-shrink: 0;
 }
 
 #cmd {
   flex: 1;
-  background: #000;
-  color: #0f0;
-  border: none;
+  background: var(--bg);
+  color: var(--text);
+  border: 1px solid var(--border);
   outline: none;
-  padding: 8px 12px;
-  border-radius: 999px;
+  padding: 8px 14px;
+  border-radius: 6px;
+  font-family: inherit;
+  font-size: 13px;
 }
+#cmd:focus { border-color: var(--blue); }
+
+#sendBtn {
+  background: var(--clear-bg);
+  color: var(--text);
+  border: 1px solid var(--clear-bd);
+  padding: 7px 14px;
+}
+#sendBtn:hover { background: #30363d; }
 
 /* Syntax colors */
-.blue   { color: #4aa3ff; }
-.green  { color: #6aff6a; }
-.yellow { color: #ffd84a; }
-.purple { color: #c084fc; }
+.blue   { color: var(--blue); }
+.green  { color: var(--green); }
+.yellow { color: var(--yellow); }
+.purple { color: var(--purple); }
+.error  { color: #f85149; }
 </style>
 </head>
 
@@ -110,41 +204,52 @@ html, body {
 
 <div id="app">
 
+  <div id="header">
+    <div id="title"><span class="accent">VSDTL</span> IDE</div>
+    <div id="headerActions">
+      <button id="clearBtn" onclick="clearAll()">Clear</button>
+      <button id="runBtn" onclick="runFile()">▶ Run</button>
+    </div>
+  </div>
+
   <div id="editorWrap">
     <pre id="highlight"></pre>
     <textarea id="editor" spellcheck="false"
-      placeholder="Write VSDTL here..."></textarea>
+      placeholder="Write VSDTL here...&#10;&#10;@users = [&#34;Alice&#34;,&#34;Bob&#34;]&#10;Display(#users)"></textarea>
   </div>
 
-  <div id="toolbar">
-    <button id="runBtn" onclick="toggleRun()">▶ RUN</button>
-  </div>
-
+  <div id="outputBar">Output</div>
   <div id="output"></div>
 
   <div id="prompt">
-    <button onclick="runCommand()">▶</button>
-    <span>&gt;</span>
-    <input id="cmd" placeholder='Insert(table) | Add(table,"x") | Display(#table)'>
+    <span class="prefix">&gt;</span>
+    <input id="cmd" placeholder='Insert(table) | Add(table,"x") | Display(#table)'
+      onkeydown="if(event.key==='Enter')runCommand()">
+    <button id="sendBtn" onclick="runCommand()">▶</button>
   </div>
 
 </div>
 
 <script>
-const editor = document.getElementById("editor");
+const editor   = document.getElementById("editor");
 const highlight = document.getElementById("highlight");
-const output = document.getElementById("output");
-const cmd = document.getElementById("cmd");
-const runBtn = document.getElementById("runBtn");
+const output    = document.getElementById("output");
+const cmd       = document.getElementById("cmd");
 
 let tables = {};
-let running = false;
+
+/* ---------- HELPERS ---------- */
+
+function escapeHtml(s) {
+  return s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+}
 
 /* ---------- SYNTAX HIGHLIGHTING ---------- */
 
 editor.addEventListener("input", updateHighlight);
 editor.addEventListener("scroll", () => {
   highlight.scrollTop = editor.scrollTop;
+  highlight.scrollLeft = editor.scrollLeft;
 });
 
 function updateHighlight() {
@@ -154,6 +259,7 @@ function updateHighlight() {
 function tokenize(src) {
   let out = "";
   let token = "";
+  let inString = false;
 
   const flush = () => {
     out += colorToken(token);
@@ -161,38 +267,37 @@ function tokenize(src) {
   };
 
   for (const ch of src) {
-    if (" \n=(),".includes(ch)) {
+    if (inString) {
+      token += ch;
+      if (ch === '"') { flush(); inString = false; }
+    } else if (ch === '"') {
       flush();
-      out += ch === "\n" ? "<br>" : ch;
+      inString = true;
+      token = '"';
+    } else if (" \n=(),".includes(ch)) {
+      flush();
+      out += ch === "\n" ? "\n" : escapeHtml(ch);
     } else {
       token += ch;
     }
   }
-
   flush();
   return out;
 }
 
 function colorToken(tok) {
   if (!tok) return "";
-  if (tok === "Display") return `<span class="yellow">${tok}</span>`;
-  if (tok.startsWith("@")) return `<span class="blue">${tok}</span>`;
-  if (tok.startsWith("#")) return `<span class="purple">${tok}</span>`;
-  if (/^".*"$/.test(tok)) return `<span class="green">${tok}</span>`;
-  return tok;
+  const esc = escapeHtml(tok);
+  if (tok === "Display") return `<span class="yellow">${esc}</span>`;
+  if (tok.startsWith("@")) return `<span class="blue">${esc}</span>`;
+  if (tok.startsWith("#")) return `<span class="purple">${esc}</span>`;
+  if (/^".*"$/.test(tok)) return `<span class="green">${esc}</span>`;
+  return esc;
 }
 
 /* ---------- FILE RUNNER ---------- */
 
-function toggleRun() {
-  running ? stopRun() : runFile();
-}
-
 function runFile() {
-  running = true;
-  runBtn.textContent = "■ STOP";
-  runBtn.style.background = "#e74c3c";
-
   output.textContent = "";
   tables = {};
 
@@ -207,26 +312,34 @@ function runFile() {
 
   const ms = (performance.now() - start).toFixed(2);
   output.textContent += `\nExecuted in ${ms} ms\n`;
-
-  stopRun();
 }
 
-function stopRun() {
-  running = false;
-  runBtn.textContent = "▶ RUN";
-  runBtn.style.background = "#2ecc71";
+function clearAll() {
+  editor.value = "";
+  output.textContent = "";
+  tables = {};
+  updateHighlight();
+  editor.focus();
 }
 
 function execLine(line) {
   if (!line) return;
 
   if (line.startsWith("@")) {
-    const [n, v] = line.split("=");
-    tables[n.slice(1).trim()] = JSON.parse(v);
+    const eqIdx = line.indexOf("=");
+    if (eqIdx === -1) throw new Error("Invalid table definition: missing '=' in '" + line + "'");
+    const n = line.slice(1, eqIdx).trim();
+    const v = line.slice(eqIdx + 1).trim();
+    tables[n] = JSON.parse(v);
   }
   else if (line.startsWith("Display")) {
     const t = line.match(/#(\w+)/)?.[1];
-    output.textContent += (tables[t] || []).join(", ") + "\n";
+    if (!t) throw new Error("Display requires a table reference: Display(#name)");
+    if (!tables[t]) {
+      output.textContent += `Table "${t}" is empty or not defined\n`;
+      return;
+    }
+    output.textContent += tables[t].join(", ") + "\n";
   }
 }
 
@@ -237,34 +350,56 @@ function runCommand() {
   if (!c) return;
   cmd.value = "";
 
-  if (c.startsWith("Insert(")) {
-    const n = c.slice(7, -1);
+  let match;
+
+  if (match = c.match(/^Insert\((.+)\)$/)) {
+    const n = match[1].trim();
     tables[n] = [];
-    editor.value += `\n@${n} = []`;
+    const re = new RegExp("@" + n.replace(/[.*+?^${}()|[\]\\]/g, "\\$&") + "\\s*=\\s*.*");
+    if (re.test(editor.value)) {
+      editor.value = editor.value.replace(re, "@" + n + " = []");
+    } else {
+      editor.value += (editor.value && !editor.value.endsWith("\n") ? "\n" : "") + "@" + n + " = []";
+    }
     updateHighlight();
   }
 
-  else if (c.startsWith("Add(")) {
-    const body = c.slice(4, -1);
-    const name = body.split(",")[0].trim();
-    const vals = body.match(/"[^"]+"/g)
+  else if (match = c.match(/^Add\((.+)\)$/)) {
+    const body = match[1];
+    const commaIdx = body.indexOf(",");
+    if (commaIdx === -1) {
+      output.textContent += "Add requires at least one value: Add(table,\"value\")\n";
+      return;
+    }
+    const name = body.slice(0, commaIdx).trim();
+    const vals = body.slice(commaIdx + 1).match(/"[^"]+"/g)
       ?.map(v => v.replace(/"/g, "")) || [];
 
     if (!tables[name]) tables[name] = [];
     tables[name].push(...vals);
 
-    const re = new RegExp(`@${name}\\s*=\\s*.*`);
-    editor.value = editor.value.replace(
-      re,
-      `@${name} = ${JSON.stringify(tables[name])}`
-    );
+    const escapedName = name.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+    const re = new RegExp("@" + escapedName + "\\s*=\\s*.*");
+    if (re.test(editor.value)) {
+      editor.value = editor.value.replace(re, "@" + name + " = " + JSON.stringify(tables[name]));
+    } else {
+      editor.value += (editor.value && !editor.value.endsWith("\n") ? "\n" : "") + "@" + name + " = " + JSON.stringify(tables[name]);
+    }
     updateHighlight();
   }
 
   else if (c.startsWith("Display")) {
     execLine(c);
   }
+
+  else {
+    output.textContent += `Unknown command: ${c}\n`;
+  }
 }
+
+/* Init */
+updateHighlight();
+editor.focus();
 </script>
 
 </body>
